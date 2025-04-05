@@ -133,9 +133,18 @@ export default function ChatArea({ currentRoom }) {
       <div className="p-4 border-b border-gray-200 bg-white">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold">{currentRoom.name}</h2>
+            <h2 className="text-lg font-semibold">
+              {" "}
+              {currentRoom?.type === "GROUP"
+                ? currentRoom?.name
+                : currentRoom?.participants[1]?.user?.name}
+            </h2>
             <p className="text-sm text-gray-500">
-              {currentRoom.users?.length || 0} members
+              {currentRoom?.type === "GROUP"
+                ? `${currentRoom.participants?.length || 0} members`
+                : currentRoom?.participants[1]?.user?.is_online
+                ? "Online"
+                : currentRoom?.participants[1]?.user?.last_seen}
             </p>
           </div>
         </div>

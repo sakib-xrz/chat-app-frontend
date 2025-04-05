@@ -1,9 +1,9 @@
-export const tagTypesList = ["user", "profile", "auth", "room", "message"];
+export const tagTypesList = ["user", "profile", "auth", "thread", "message"];
 
 export const tagTypes = {
   user: "user",
   profile: "profile",
   auth: "auth",
-  room: "room",
+  thread: "thread",
   message: "message",
 };

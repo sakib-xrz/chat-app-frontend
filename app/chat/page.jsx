@@ -3,10 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  useGetUserRoomsQuery,
-  useGetRoomDetailsQuery,
-} from "@/redux/features/chat/chatApi";
+import { useGetUserThreadsQuery } from "@/redux/features/chat/chatApi";
 import { useGetProfileQuery } from "@/redux/features/auth/authApi";
 import { setCurrentRoom } from "@/redux/features/chat/chatSlice";
 import { logout } from "@/redux/features/auth/authSlice";
@@ -26,12 +23,8 @@ export default function ChatPage() {
     skip: !isAuthenticated,
   });
 
-  const { data: rooms = [] } = useGetUserRoomsQuery(undefined, {
+  const { data: threads = [] } = useGetUserThreadsQuery(undefined, {
     skip: !isAuthenticated,
-  });
-
-  const { data: roomDetails } = useGetRoomDetailsQuery(currentRoom?._id, {
-    skip: !currentRoom?._id,
   });
 
   useEffect(() => {
@@ -73,18 +66,18 @@ export default function ChatPage() {
     <div className="flex h-screen bg-gray-100">
       <Sidebar
         user={user?.data}
-        rooms={rooms?.data}
+        threads={threads?.data}
         currentRoom={currentRoom}
         onRoomSelect={handleRoomSelect}
         onCreateRoom={toggleCreateRoomModal}
         onLogout={handleLogout}
       />
 
-      <ChatArea currentRoom={currentRoom || roomDetails} />
+      {/* <ChatArea currentRoom={currentRoom || roomDetails?.data} /> */}
 
-      {isCreateRoomModalOpen && (
+      {/* {isCreateRoomModalOpen && (
         <CreateRoomModal onClose={toggleCreateRoomModal} />
-      )}
+      )} */}
     </div>
   );
 }
