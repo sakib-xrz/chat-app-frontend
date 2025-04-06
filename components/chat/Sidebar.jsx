@@ -2,22 +2,18 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Search, Plus, LogOut, Settings, User } from "lucide-react";
+import { Search, LogOut, Settings, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { setSelectedThread } from "@/redux/features/chat/chatSlice";
 
-export default function Sidebar({
-  user,
-  threads,
-  currentRoom,
-  onRoomSelect,
-  onCreateRoom,
-  onLogout,
-}) {
+export default function Sidebar({ user, threads, onLogout }) {
   const [searchQuery, setSearchQuery] = useState("");
+  const selectedThread = useSelector((state) => state.chat.selectedThread);
+  const dispatch = useDispatch();
 
   return (
     <div className="w-80 bg-white border-r border-gray-200 flex flex-col h-full">
@@ -65,14 +61,6 @@ export default function Sidebar({
             <h2 className="text-sm font-semibold text-gray-500">
               Conversations
             </h2>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onCreateRoom}
-              aria-label="Create new room"
-            >
-              <Plus size={18} />
-            </Button>
           </div>
 
           {threads?.length > 0 ? (
@@ -82,10 +70,10 @@ export default function Sidebar({
                   <Button
                     key={thread.id}
                     variant={
-                      currentRoom?.id === thread.id ? "secondary" : "ghost"
+                      selectedThread?.id === thread.id ? "secondary" : "ghost"
                     }
                     className="w-full justify-start h-auto py-2 px-3"
-                    onClick={() => onRoomSelect(thread)}
+                    onClick={() => dispatch(setSelectedThread(thread))}
                   >
                     <div className="relative mr-2">
                       <Avatar>

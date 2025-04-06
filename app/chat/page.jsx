@@ -1,30 +1,35 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { useGetUserThreadsQuery } from "@/redux/features/chat/chatApi";
 import { useGetProfileQuery } from "@/redux/features/auth/authApi";
-import { setCurrentRoom } from "@/redux/features/chat/chatSlice";
 import { logout } from "@/redux/features/auth/authSlice";
 import { initializeSocket, closeSocket } from "@/services/socketService";
 import Sidebar from "@/components/chat/Sidebar";
 import ChatArea from "@/components/chat/ChatArea";
-import CreateRoomModal from "@/components/chat/CreateRoomModal";
+import {
+  setMessages,
+  setSelectedThread,
+} from "@/redux/features/chat/chatSlice";
 
 export default function ChatPage() {
   const dispatch = useDispatch();
   const router = useRouter();
   const { token, isAuthenticated } = useSelector((state) => state.auth);
-  const { currentRoom } = useSelector((state) => state.chat);
-  const [isCreateRoomModalOpen, setIsCreateRoomModalOpen] = useState(false);
-
-  const { data: user } = useGetProfileQuery(undefined, {
-    skip: !isAuthenticated,
-  });
+  const selectedThread = useSelector((state) => state.chat.selectedThread);
 
   const { data: threads = [] } = useGetUserThreadsQuery(undefined, {
     skip: !isAuthenticated,
+    refetchOnMountOrArgChange: true,
+    refetchOnFocus: true,
+  });
+
+  const { data: user } = useGetProfileQuery(undefined, {
+    skip: !isAuthenticated,
+    refetchOnMountOrArgChange: true,
+    refetchOnFocus: true,
   });
 
   useEffect(() => {
@@ -47,37 +52,27 @@ export default function ChatPage() {
   const handleLogout = () => {
     closeSocket();
     dispatch(logout());
+    dispatch(setSelectedThread(null));
+    dispatch(setMessages([]));
     router.push("/login");
   };
 
-  const handleRoomSelect = (room) => {
-    dispatch(setCurrentRoom(room));
-  };
-
-  const toggleCreateRoomModal = () => {
-    setIsCreateRoomModalOpen(!isCreateRoomModalOpen);
-  };
-
-  if (!isAuthenticated) {
-    return null;
-  }
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/login");
+      return;
+    }
+  }, [isAuthenticated, router]);
 
   return (
     <div className="flex h-screen bg-gray-100">
       <Sidebar
         user={user?.data}
         threads={threads?.data}
-        currentRoom={currentRoom}
-        onRoomSelect={handleRoomSelect}
-        onCreateRoom={toggleCreateRoomModal}
         onLogout={handleLogout}
       />
 
-      {/* <ChatArea currentRoom={currentRoom || roomDetails?.data} /> */}
-
-      {/* {isCreateRoomModalOpen && (
-        <CreateRoomModal onClose={toggleCreateRoomModal} />
-      )} */}
+      <ChatArea selectedThread={selectedThread} user={user?.data} />
     </div>
   );
 }

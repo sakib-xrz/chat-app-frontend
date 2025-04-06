@@ -10,7 +10,14 @@ export const chatApi = baseApi.injectEndpoints({
       }),
       providesTags: [tagTypes.thread],
     }),
+    getMessageByThreadId: builder.query({
+      query: (threadId) => ({
+        url: `/chat/thread/${threadId}/messages`,
+        method: "GET",
+      }),
+      providesTags: [tagTypes.message],
+    }),
   }),
 });
 
-export const { useGetUserThreadsQuery } = chatApi;
+export const { useGetUserThreadsQuery, useGetMessageByThreadIdQuery } = chatApi;
