@@ -2,6 +2,8 @@
 import { io } from "socket.io-client";
 import { store } from "@/redux/store";
 import { getMessages, setMessages } from "@/redux/features/chat/chatSlice";
+import { chatApi } from "@/redux/features/chat/chatApi";
+import { tagTypes } from "@/redux/tagTypes";
 
 let socket;
 
@@ -39,6 +41,14 @@ export const initializeSocket = (token) => {
     sound.play();
     const messages = getMessages(store.getState());
     store.dispatch(setMessages([...messages, message]));
+
+    // ✅ Invalidate the exact tags
+    store.dispatch(
+      chatApi.util.invalidateTags([
+        { type: tagTypes.message, id: message.thread_id },
+        tagTypes.thread,
+      ])
+    );
   });
 
   return socket;

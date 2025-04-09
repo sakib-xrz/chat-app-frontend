@@ -15,9 +15,23 @@ export const chatApi = baseApi.injectEndpoints({
         url: `/chat/thread/${threadId}/messages`,
         method: "GET",
       }),
-      providesTags: [tagTypes.message],
+      providesTags: (result, error, threadId) => [
+        { type: tagTypes.message, id: threadId },
+      ],
+    }),
+    sendMessage: builder.mutation({
+      query: (body) => ({
+        url: `/chat/messages`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: [tagTypes.message, tagTypes.thread],
     }),
   }),
 });
 
-export const { useGetUserThreadsQuery, useGetMessageByThreadIdQuery } = chatApi;
+export const {
+  useGetUserThreadsQuery,
+  useGetMessageByThreadIdQuery,
+  useSendMessageMutation,
+} = chatApi;

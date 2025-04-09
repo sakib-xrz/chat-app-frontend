@@ -11,7 +11,10 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { formatMessengerTime } from "@/lib/utils";
-import { useGetMessageByThreadIdQuery } from "@/redux/features/chat/chatApi";
+import {
+  useGetMessageByThreadIdQuery,
+  useSendMessageMutation,
+} from "@/redux/features/chat/chatApi";
 import { setMessages } from "@/redux/features/chat/chatSlice";
 import { AvatarImage } from "@radix-ui/react-avatar";
 
@@ -26,15 +29,16 @@ export default function ChatArea({ selectedThread, user }) {
     selectedThread?.id,
     {
       skip: !selectedThread?.id,
-      refetchOnFocus: true,
-      refetchOnReconnect: true,
+      refetchOnMountOrArgChange: true,
     }
   );
+
+  const [sendMessage] = useSendMessageMutation();
 
   useEffect(() => {
     dispatch(setMessages(messagesData?.data));
     scrollToBottom();
-  }, [messagesData, dispatch]);
+  }, [messagesData]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -46,20 +50,16 @@ export default function ChatArea({ selectedThread, user }) {
     },
     validationSchema: messageSchema,
     onSubmit: async (values, { resetForm }) => {
-      // if (editingMessageId) {
-      //   await editMessage({
-      //     messageId: editingMessageId,
-      //     content: values.content,
-      //   });
-      //   setEditingMessageId(null);
-      // } else if (selectedThread?.id) {
-      //   await sendMessage({
-      //     roomId: selectedThread.id,
-      //     content: values.content,
-      //   });
-      //   sendMessageSocket(selectedThread.id, values.content);
-      // }
-      // resetForm();
+      console.log("Sending message:", values);
+
+      const payload = {
+        sender_id: user?.id,
+        thread_id: selectedThread?.id,
+        content: values.content,
+      };
+
+      await sendMessage(payload);
+      resetForm();
     },
   });
 
@@ -95,7 +95,7 @@ export default function ChatArea({ selectedThread, user }) {
             </h2>
             <p className="text-sm text-gray-500">
               {selectedThread?.participant?.is_online
-                ? "Online"
+                ? "Active Now"
                 : `Last seen ${formatMessengerTime(
                     selectedThread?.participant?.last_seen
                   )}`}
@@ -107,53 +107,55 @@ export default function ChatArea({ selectedThread, user }) {
       <ScrollArea className="flex-1 p-4 bg-gray-50">
         {messages?.length > 0 ? (
           <div className="space-y-4">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${
-                  message.sender.id === user?.id
-                    ? "justify-end"
-                    : "justify-start"
-                }`}
-              >
-                <div className="relative group max-w-xs sm:max-w-md">
-                  {message.sender.id !== user?.id && (
-                    <Avatar className="absolute -left-10 top-0">
-                      <AvatarImage src={message.sender?.image} />
-                      <AvatarFallback>
-                        {message.sender?.name?.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
-
-                  <div
-                    className={`px-4 py-2 rounded-lg ${
-                      message.sender.id === user?.id
-                        ? "bg-blue-500 text-white"
-                        : "bg-white text-gray-800 border border-gray-200"
-                    }`}
-                  >
+            {messages
+              .filter((message) => message.thread_id === selectedThread.id)
+              .map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex ${
+                    message.sender.id === user?.id
+                      ? "justify-end"
+                      : "justify-start"
+                  }`}
+                >
+                  <div className="relative group max-w-xs sm:max-w-md">
                     {message.sender.id !== user?.id && (
-                      <div className="font-semibold text-xs mb-1">
-                        {message.sender.name}
-                      </div>
+                      <Avatar className="absolute -left-10 top-0">
+                        <AvatarImage src={message.sender?.image} />
+                        <AvatarFallback>
+                          {message.sender?.name?.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
                     )}
 
-                    {<p>{message.content}</p>}
-
                     <div
-                      className={`text-xs mt-1 ${
+                      className={`px-4 py-2 rounded-lg ${
                         message.sender.id === user?.id
-                          ? "text-blue-200"
-                          : "text-gray-500"
+                          ? "bg-blue-500 text-white"
+                          : "bg-white text-gray-800 border border-gray-200"
                       }`}
                     >
-                      {formatMessengerTime(message.created_at)}
+                      {message.sender.id !== user?.id && (
+                        <div className="font-semibold text-xs mb-1">
+                          {message.sender.name}
+                        </div>
+                      )}
+
+                      {<p>{message.content}</p>}
+
+                      <div
+                        className={`text-xs mt-1 ${
+                          message.sender.id === user?.id
+                            ? "text-blue-200"
+                            : "text-gray-500"
+                        }`}
+                      >
+                        {formatMessengerTime(message.created_at)}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
             <div ref={messagesEndRef} />
           </div>
         ) : (
